@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HACK MINES</title>
+  <style>
+    :root{
+      --bg:#0f1020; --panel:#191b34; --brand:#3a60f5; --brand-2:#2446d4; --text:#eef1ff; --muted:#9aa0c3;
+      --radius:18px;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
+      background:linear-gradient(135deg,#0b0c1a,#171935);
+      color:var(--text); display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:24px;
+    }
+    h1{margin:8px 0 18px; font-size:28px; letter-spacing:.5px; text-align:center;}
+    .app, #login{width:min(920px,95vw); display:grid; gap:16px; align-items:center; justify-items:center;}
+    .actions{display:flex; gap:12px; flex-wrap:wrap; justify-content:center;}
+    .btn{border:0; background:var(--brand); color:#fff; padding:12px 18px; border-radius:14px; font-weight:700; cursor:pointer;
+      box-shadow:0 8px 24px rgba(58,96,245,.45); transition:transform .12s ease, background .2s ease;}
+    .btn:hover{ background:var(--brand-2); transform:translateY(-1px)}
+    .btn:active{ transform:translateY(0)}
+    .board-wrap{background:var(--panel); padding:18px; border-radius:var(--radius); box-shadow:0 14px 40px rgba(0,0,0,.45);}
+    .board{display:grid; grid-template-columns:repeat(5,64px); grid-template-rows:repeat(5,64px); gap:12px;}
+    .cell{background:linear-gradient(180deg,#3a60f5,#2446d4); border-radius:14px;
+      box-shadow:inset 0 -4px 8px rgba(0,0,0,.35),0 6px 14px rgba(0,0,0,.45);
+      display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff; user-select:none;
+      transition:transform .12s ease, box-shadow .12s ease, background .2s ease; cursor:pointer;}
+    .cell:hover{ transform:scale(1.04)}
+    .cell.star{background:rgba(255,255,255,.04); box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 10px 18px rgba(0,0,0,.5); cursor:default;}
+    .emoji{font-size:28px; filter:drop-shadow(0 2px 6px rgba(255,215,0,.35)); animation:pop .45s ease}
+    .bomb{font-size:26px; filter:drop-shadow(0 2px 6px rgba(255,0,0,.45)); animation:pop .45s ease}
+    @keyframes pop{from{opacity:0; transform:scale(.75)} to{opacity:1; transform:scale(1)}}
+    .picker{display:flex; align-items:center; gap:10px; margin-top:6px; background:var(--panel); padding:10px; border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,.35);}
+    .pick-btn{border:0; width:44px; height:44px; border-radius:999px; background:#1f2242; color:#fff; font-weight:900; font-size:18px; cursor:pointer; display:grid; place-items:center; transition:transform .12s ease, background .2s ease;}
+    .pick-btn:hover{ background:#232657; transform:translateY(-1px)}
+    .pick-btn:active{ transform:translateY(0)}
+    .pick-display{min-width:110px; padding:10px 16px; border-radius:999px; background:#11142c; color:#fff; font-weight:800; text-align:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);}
+    .hint{color:var(--muted); font-size:12px; margin-top:-4px}
+    .row{display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap;}
+    #login{display:grid; gap:12px; justify-items:center; background:var(--panel); padding:24px; border-radius:var(--radius); box-shadow:0 14px 40px rgba(0,0,0,.45);}
+    #login input[type=number]{padding:12px; border-radius:14px; border:none; width:200px; text-align:center; font-size:18px; background:#fff; color:#000; font-weight:700;}
+    #app{display:none;}
+  </style>
+</head>
+<body>
+  <div id="login">
+    <h1>💎 Воридшавӣ</h1>
+    <input id="userId" type="number" placeholder="ID-и худро ворид кунед" />
+    <button class="btn" onclick="doLogin()">Вуруд</button>
+  </div>
+
+  <div id="app" class="app">
+    <h1>💎 HACK MINES</h1>
+    <div class="actions">
+      <button id="btn-signal" class="btn">Гирифтани сигнал</button>
+      <button id="btn-all" class="btn">Ҳамаи ситораҳо</button>
+    </div>
+
+    <div class="board-wrap">
+      <div id="board" class="board" aria-label="5x5 board"></div>
+    </div>
+
+    <div class="row">
+      <div class="picker" aria-label="Mines picker">
+        <button id="btn-minus" class="pick-btn">−</button>
+        <div id="pick-display" class="pick-display" aria-live="polite">Минаҳо: 1</div>
+        <button id="btn-plus" class="pick-btn">+</button>
+      </div>
+    </div>
+    <div class="hint">Дар чап «−» / дар рост «+». Рақам дар марказ шумораи минаҳо аст.</div>
+  </div>
+
+  <script>
+    const boardEl = document.getElementById('board');
+    const btnSignal = document.getElementById('btn-signal');
+    const btnAll = document.getElementById('btn-all');
+    const btnMinus = document.getElementById('btn-minus');
+    const btnPlus  = document.getElementById('btn-plus');
+    const pickDisplay = document.getElementById('pick-display');
+
+    const size = 25;
+    const cells = [];
+    for (let i=0;i<size;i++){
+      const d = document.createElement('div');
+      d.className = 'cell';
+      d.setAttribute('data-idx', i);
+      boardEl.appendChild(d);
+      cells.push(d);
+    }
+
+    let values = [1,3,5,7];
+    let idx = 0;
+    let busy = false;
+    const starsMap = { 1:5, 3:4, 5:3, 7:2 };
+
+    function updatePicker(){ pickDisplay.textContent = `Минаҳо: ${values[idx]}`; }
+    function clearCell(el){ el.classList.remove('star'); el.innerHTML=''; }
+    function clearBoard(){ cells.forEach(clearCell); }
+    function randInt(n){ return Math.floor(Math.random()*n); }
+    function pickUnique(count, exclude=[]){
+      const set = new Set(exclude);
+      while(set.size < count + exclude.length){
+        set.add(randInt(size));
+      }
+      return Array.from(set).filter(i=>!exclude.includes(i));
+    }
+
+    let audioCtx = null;
+    function beep(){try{if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type='sine'; o.frequency.value=660; g.gain.value=0.001; const t=audioCtx.currentTime; g.gain.exponentialRampToValueAtTime(0.12,t+0.08); g.gain.exponentialRampToValueAtTime(0.0001,t+0.28); o.start(); o.stop(t+0.3);}catch(e){}}
+
+    async function showSignal(){
+      if(busy) return;
+      busy=true; clearBoard();
+      const mines=values[idx]; const stars=starsMap[mines] ?? 3;
+      const picks=pickUnique(stars);
+      for(const i of picks){
+        await new Promise(r=>setTimeout(r,120));
+        const cell=cells[i]; cell.classList.add('star'); cell.innerHTML='<span class="emoji">⭐</span>';
+        beep();
+      }
+      busy=false;
+    }
+
+    async function showAll(){
+      if(busy) return;
+      busy=true; clearBoard();
+      const mines=values[idx];
+      const allIdx=Array.from({length:size},(_,i)=>i);
+      const mineIdx=pickUnique(mines);
+      const starIdx=allIdx.filter(i=>!mineIdx.includes(i));
+      for(const i of starIdx){ cells[i].classList.add('star'); cells[i].innerHTML='<span class="emoji">⭐</span>'; }
+      for(const i of mineIdx){ cells[i].innerHTML='<span class="bomb">💣</span>'; }
+      busy=false;
+    }
+
+    btnMinus.addEventListener('click',()=>{ idx=(idx-1+values.length)%values.length; updatePicker(); clearBoard(); });
+    btnPlus.addEventListener('click',()=>{ idx=(idx+1)%values.length; updatePicker(); clearBoard(); });
+    btnSignal.addEventListener('click',showSignal);
+    btnAll.addEventListener('click',showAll);
+    updatePicker();
+
+    function doLogin(){
+      const id=document.getElementById('userId').value.trim();
+      if(id.length===0){ alert('Лутфан ID ворид кунед!'); return; }
+      if(!/^\d+$/.test(id)){ alert('ID бояд танҳо рақам бошад!'); return; }
+      document.getElementById('login').style.display='none';
+      document.getElementById('app').style.display='grid';
+    }
+  </script>
+</body>
+</html>
